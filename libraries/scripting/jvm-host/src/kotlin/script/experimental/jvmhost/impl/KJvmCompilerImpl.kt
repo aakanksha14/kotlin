@@ -16,10 +16,7 @@ import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
-import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
+import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.JvmModulePathRoot
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
@@ -133,7 +130,9 @@ class KJvmCompilerImpl(val hostConfiguration: ScriptingHostConfiguration) : KJvm
             val psiFile: KtFile = psiFileFactory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false) as KtFile?
                 ?: return failure("Unable to make PSI file from script".asErrorDiagnostics())
 
-            val sourceFiles = listOf(psiFile)
+            val sourceFiles = arrayListOf(psiFile).also {
+                it.addAll(collectRequiredSourcesFromDependencies(kotlinCompilerConfiguration, environment.project, it))
+            }
 
             analyzerWithCompilerReport.analyzeAndReport(sourceFiles) {
                 val project = environment.project
